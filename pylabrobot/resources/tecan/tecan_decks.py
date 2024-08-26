@@ -32,7 +32,10 @@ EVO200_SIZE_X = 1915
 EVO200_SIZE_Y = 780
 EVO200_SIZE_Z = 765
 
-
+FLUENT780_NUM_RAILS = 42
+FLUENT780_SIZE_X = 1479
+FLUENT780_SIZE_Y = 606.5
+FLUENT780_SIZE_Z = 137
 class TecanDeck(Deck):
   """ Tecan decks """
 
@@ -232,4 +235,18 @@ def EVO200Deck(origin: Coordinate = Coordinate(0, 0, 0)) -> TecanDeck:
       size_x=EVO200_SIZE_X,
       size_y=EVO200_SIZE_Y,
       size_z=EVO200_SIZE_Z,
+      origin=origin)
+
+
+def Fluent780Deck(origin: Coordinate = Coordinate(0, 0, 0)) -> TecanDeck:
+  """ Fluent780 deck.
+
+  Sizes from operating manual
+  """
+
+  return TecanDeck(
+      num_rails=FLUENT780_NUM_RAILS,
+      size_x=FLUENT780_SIZE_X,
+      size_y=FLUENT780_SIZE_Y,
+      size_z=FLUENT780_SIZE_Z,
       origin=origin)
