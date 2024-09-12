@@ -1,0 +1,34 @@
+from __future__ import annotations
+
+{% if named_tuples %}
+from typing import NamedTuple
+{% endif %}
+
+{% for named_tuple in named_tuples %}
+    {% for import_ in named_tuple.imports %}
+from {{ import_.origin }} import {{ import_.target }}
+    {% endfor %}
+{% endfor %}
+{% for data_type_definition in data_type_definitions %}
+    {% for import_ in data_type_definition.imports %}
+from {{ import_.origin }} import {{ import_.target }}
+    {% endfor %}
+{% endfor %}
+
+
+{% for named_tuple in named_tuples %}
+class {{ named_tuple.name }}(NamedTuple):
+    {% if not named_tuple.fields %}
+    pass
+    {% endif %}
+    {% for field in named_tuple.fields %}
+    {{ field.name }}: {{ field.type.representation }}
+    """
+    {{ field.description }}
+    """
+    {% endfor %}
+{% endfor %}
+
+{% for definition in data_type_definitions %}
+{{ definition.name }} = {{ definition.type.representation }}
+{% endfor %}

@@ -1,0 +1,98 @@
+Metadata-Version: 2.1
+Name: sila2
+Version: 0.1.0
+Summary: Python implementation of the SiLA 2 standard for lab automation
+Home-page: https://gitlab.com/sila2/sila_python
+Author: Niklas Mertsch
+Author-email: niklas.mertsch@stud.uni-goettingen.de
+License: UNKNOWN
+Project-URL: Source, https://gitlab.com/sila2/sila_python
+Project-URL: Bug Reports, https://gitlab.com/sila2/sila_python/-/issues
+Project-URL: SiLA Standard, https://sila-standard.org
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Healthcare Industry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: black
+Requires-Dist: grpcio
+Requires-Dist: grpcio-tools
+Requires-Dist: isort
+Requires-Dist: jinja2
+Requires-Dist: lxml
+Requires-Dist: jsonschema
+Requires-Dist: xmlschema
+Requires-Dist: zeroconf
+Provides-Extra: dev
+Requires-Dist: pytest ; extra == 'dev'
+Requires-Dist: pytest-cov ; extra == 'dev'
+Requires-Dist: flake8 ; extra == 'dev'
+Provides-Extra: tests
+Requires-Dist: pytest ; extra == 'tests'
+Requires-Dist: pytest-cov ; extra == 'tests'
+
+[![coverage report](https://gitlab.com/sila2/sila_python/badges/master/coverage.svg)](https://gitlab.com/sila2/sila_python/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+# SiLA 2 Python Implementation
+
+## Getting started
+### Installation
+Use `pip install sila2` to install the library.
+
+### Guides
+Guides on SiLA server generation, feature implementation, and usage of SiLA clients can be found in the [`docs`](./docs/) directory.
+
+### Example
+The directory [`example_server`](./example_server/) contains an example SiLA server application. [`example_client_scripts`](./example_client_scripts/) contains multiple SiLA client programs that interact with the example server.
+
+## Implementation status
+### Missing parts from SiLA 2 specification
+- Excryption
+  - currently, communication is not encrypted
+- Lifetime handling for binary transfer
+  - currently, large binaries are only deleted on request
+- Lifetime handling for observable commands
+  - currently, no lifetime is reported and execution UUIDs stay valid indefinitely
+- Server-initiated connection (SiLA 2 v1.1)
+  - currently, only client-initiated connections are supported
+
+### Deviations from SiLA 2 specification
+- [Duration](https://gitlab.com/SiLA2/sila_base/-/blob/master/protobuf/SiLAFramework.proto#L67) is rounded to microseconds, because [`datetime.timedelta`](https://docs.python.org/3.9/library/datetime.html#datetime.timedelta) does not support sub-microsecond precision
+- Microseconds of [`datetime.time`](https://docs.python.org/3.9/library/datetime.html#datetime.time) and [`datetime.datetime`](https://docs.python.org/3.9/library/datetime.html#datetime.datetime) are ignored since [Time](https://gitlab.com/SiLA2/sila_base/-/blob/master/protobuf/SiLAFramework.proto#L38) and [Timestamp](https://gitlab.com/SiLA2/sila_base/-/blob/master/protobuf/SiLAFramework.proto#L45) don't support sub-second precision 
+
+### Code generator
+- Generates submodules from feature definitions (`.sila.xml` files)
+  - feature implementation abstract base class
+  - client typing stub (`.pyi` file)
+- Does not yet support the Structure and Custom data types (fallback to `typing.Any`)
+- Does not yet generate full docstrings (e.g. constraints are missing)
+
+## Contributing
+Contributions in the form of issues, feature requests and merge requests are welcome. To reduce duplicate work, please create an issue and state that you are working on it before you spend significant time on writing code for a merge request.
+
+###  Development setup
+Clone the repository, initialize the submodule and install it as editable, including the development requirements:
+```shell
+git clone https://gitlab.com/sila2/sila_python
+cd sila2
+git submodule update --init --recursive
+pip install -e .[dev]
+```
+
+### Development environment
+This project uses [black](https://black.readthedocs.io/) as code formatter and [isort](https://pycqa.github.io/isort/) for sorting imports.
+
+[flake8](https://flake8.pycqa.org/) is used to check for various code problems.
+[pytest](https://docs.pytest.org/) is used for testing, [pytest-cov](https://github.com/pytest-dev/pytest-cov) for measuring code coverage.
+
+To apply formatting, the script [`run-formatting`](./run-formatting) is provided with this repository.
+For testing, use [`run-checks`](./run-checks) afterwards.
+
+

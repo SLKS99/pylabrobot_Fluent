@@ -1,0 +1,6 @@
+from sila2.framework.errors.framework_error import FrameworkError, FrameworkErrorType
+
+
+class InvalidMetadata(FrameworkError):
+    def __init__(self, message: str):
+        super().__init__(FrameworkErrorType.INVALID_METADATA, message)

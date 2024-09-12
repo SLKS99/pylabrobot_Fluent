@@ -1,0 +1,60 @@
+{% for feature in features %}
+from .generated.{{ feature._identifier|lower }} import {{ feature._identifier }}Feature
+from .feature_implementations.{{ feature._identifier|lower }}_impl import {{ feature._identifier }}Impl
+{% endfor %}
+
+{% if lock_controller %}
+from .generated.lockcontroller import LockControllerFeature
+from .feature_implementations.lockcontroller_impl import LockControllerImpl
+{% endif %}
+
+{% if auth_features %}
+from .generated.authenticationservice import AuthenticationServiceFeature
+from .generated.authorizationservice import AuthorizationServiceFeature
+from .generated.authorizationproviderservice import AuthorizationProviderServiceFeature
+from .feature_implementations.authenticationservice_impl import AuthenticationServiceImpl
+from .feature_implementations.authorizationservice_impl import AuthorizationServiceImpl
+from .feature_implementations.authorizationproviderservice_impl import AuthorizationProviderServiceImpl
+{% endif %}
+
+from typing import Optional
+from uuid import UUID, uuid4
+
+from sila2.server import SilaServer
+
+
+class Server(SilaServer):
+    def __init__(
+        self,
+        server_uuid: Optional[UUID] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+    ):
+        # TODO: fill in your server information
+        if name is None:
+            name = "TODO"
+        if description is None:
+            description = "TODO"
+        super().__init__(
+            server_name=name,
+            server_description=description,
+            server_type="TODO",
+            server_version="0.1",
+            server_vendor_url="https://gitlab.com/SiLA2/sila_python",
+            server_uuid=server_uuid if server_uuid is not None else uuid4(),
+        )
+
+        {% for feature in features %}
+        self.{{ feature._identifier|lower }} = {{ feature._identifier }}Impl(self)
+        self.set_feature_implementation({{ feature._identifier }}Feature, self.{{ feature._identifier|lower }})
+        {% endfor %}
+
+        {% if lock_controller %}
+        self.set_feature_implementation(LockControllerFeature, LockControllerImpl(self))
+        {% endif %}
+
+        {% if auth_features %}
+        self.set_feature_implementation(AuthenticationServiceFeature, AuthenticationServiceImpl(self))
+        self.set_feature_implementation(AuthorizationServiceFeature, AuthorizationServiceImpl(self))
+        self.set_feature_implementation(AuthorizationProviderServiceFeature, AuthorizationProviderServiceImpl(self))
+        {% endif %}

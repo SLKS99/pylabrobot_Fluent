@@ -1,0 +1,12 @@
+
+[dev]
+tox
+coverage
+lxml
+xmlschema>=2.0.0
+Sphinx
+memory-profiler
+memray
+flake8
+mypy
+lxml-stubs

@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-fluent-sila2",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "C:/Users/ssanch18/pylabrobot_Fluent/pylabrobot_Fluent-1/fluent-sila2-connector/Server/Contracts/Contracts.csproj"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "Task to build Contracts.csproj in fluent-sila2-connector."
+    }
+  ]
+}

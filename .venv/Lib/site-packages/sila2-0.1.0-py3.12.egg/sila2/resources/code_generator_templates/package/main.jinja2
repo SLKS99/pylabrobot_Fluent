@@ -1,0 +1,30 @@
+from argparse import ArgumentParser
+
+from {{ package_name }} import Server
+
+
+def parse_args():
+    parser = ArgumentParser(prog={{ package_name|repr }}, description="Start this SiLA 2 server")
+    parser.add_argument("-a", "--ip-address", default="127.0.0.1", help="The IP address (default: '127.0.0.1')")
+    parser.add_argument("-p", "--port", type=int, default=50052, help="The port (default: 50052)")
+    parser.add_argument("--disable-discovery", action="store_true", help="Disable SiLA Server Discovery")
+
+    return parser.parse_args()
+
+
+def start_server(ip_address: str, port: int, enable_discovery: bool):
+    server = Server()
+    try:
+        server.start_insecure(ip_address, port, enable_discovery=enable_discovery)
+
+        try:
+            input("Press Enter to stop the server")
+        except KeyboardInterrupt:
+            pass
+    finally:
+        server.stop()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    start_server(args.ip_address, args.port, not args.disable_discovery)

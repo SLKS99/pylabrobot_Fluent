@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+{% if observable_commands %}
+from datetime import timedelta
+{% endif %}
+
+{% if unobservable_properties or unobservable_commands or observable_commands %}
+from sila2.server import MetadataDict
+{% endif %}
+
+{% for definition in definition_imports %}
+from ..generated.{{ feature._identifier|lower }} import {{ definition }}
+{% endfor %}
+
+{% for import_ in imports %}
+from {{ import_.origin }} import {{ import_.target }}
+{% endfor %}
+
+{% if metadata %}
+from typing import List, Union
+from sila2.framework import Feature, Command, Property, FullyQualifiedIdentifier
+{% endif %}
+
+{% for cmd in unobservable_commands %}
+from ..generated.{{ feature._identifier|lower }} import {{ cmd.name }}_Responses
+{% endfor %}
+{% for cmd in observable_commands %}
+from ..generated.{{ feature._identifier|lower }} import {{ cmd.name }}_Responses
+    {% if cmd.intermediate_responses %}
+from ..generated.{{ feature._identifier|lower }} import {{ cmd.name }}_IntermediateResponses
+from sila2.server import ObservableCommandInstanceWithIntermediateResponses
+    {% else %}
+from sila2.server import ObservableCommandInstance
+    {% endif %}
+{% endfor %}
+
+from ..generated.{{ feature._identifier|lower }} import {{ feature._identifier }}Base
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..server import Server
+
+
+class {{ feature._identifier }}Impl({{ feature._identifier }}Base):
+    def __init__(self, parent_server: Server) -> None:
+        super().__init__(parent_server=parent_server)
+
+    {% if observable_commands %}
+        # Default lifetime of observable command instances. Possible values:
+        # None: Command instance is valid and stored in memory until server shutdown
+        # datetime.timedelta: Command instance is deleted after this duration, can be increased during command runtime
+    {%- endif -%}
+    {% for cmd in observable_commands %}
+        self.{{ cmd.name }}_default_lifetime_of_execution = timedelta(minutes=30)
+    {%- endfor -%}
+
+{% for prop in unobservable_properties %}
+    def get_{{ prop.name }}(self, *, metadata: MetadataDict) -> {{ prop.type.representation }}:
+        raise NotImplementedError  # TODO
+{% endfor %}
+
+{% for cmd in unobservable_commands %}
+    def {{ cmd.name }}(
+    self,
+    {% for param in cmd.parameters %}{{ param.name }}: {{ param.type.representation }},{% endfor %}
+    *,
+    metadata: MetadataDict
+    ) -> {{ cmd.name }}_Responses:
+        raise NotImplementedError  # TODO
+{% endfor %}
+
+{% for cmd in observable_commands %}
+    def {{ cmd.name }}(
+        self,
+        {% for param in cmd.parameters %}{{ param.name }}: {{ param.type.representation }},{% endfor %}
+        *,
+        metadata: MetadataDict,
+        {% if cmd.intermediate_responses %}
+        instance: ObservableCommandInstanceWithIntermediateResponses[{{ cmd.name }}_IntermediateResponses],
+        {% else %}
+        instance: ObservableCommandInstance
+        {% endif %}
+    ) -> {{ cmd.name }}_Responses:
+        # set execution status from `waiting` to `running`
+        instance.begin_execution()
+
+        raise NotImplementedError  # TODO
+{% endfor %}
+
+{% for meta in metadata %}
+    def get_calls_affected_by_{{ meta.name }}(self) -> List[Union[Feature, Command, Property, FullyQualifiedIdentifier]]:
+        raise NotImplementedError  # TODO
+{% endfor %}

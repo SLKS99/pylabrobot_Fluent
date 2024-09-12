@@ -1,0 +1,16 @@
+from __future__ import annotations
+
+{% if errors %}
+from typing import Optional
+
+from sila2.framework.errors.defined_execution_error import DefinedExecutionError
+from .{{ feature._identifier.lower() }}_feature import {{ feature._identifier }}Feature
+{% endif %}
+
+{% for error in errors %}
+class {{ error._identifier }}(DefinedExecutionError):
+    def __init__(self, message: Optional[str] = None):
+        if message is None:
+            message = {{ error._description|strip|repr }}
+        super().__init__({{ feature._identifier }}Feature.defined_execution_errors["{{ error._identifier }}"], message=message)
+{% endfor %}

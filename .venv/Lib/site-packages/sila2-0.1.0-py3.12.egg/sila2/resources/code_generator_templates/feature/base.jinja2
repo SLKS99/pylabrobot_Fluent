@@ -1,0 +1,163 @@
+from __future__ import annotations
+
+from abc import ABC
+from sila2.server import FeatureImplementationBase
+{% if metadata or unobservable_properties or unobservable_commands or observable_commands %}
+from abc import abstractmethod
+{% endif %}
+{% if unobservable_properties or observable_properties or unobservable_commands or observable_commands %}
+from typing import Any, Dict
+from sila2.framework import FullyQualifiedIdentifier
+{% endif %}
+
+{% for i in definition_imports %}
+from .{{ feature._identifier|lower }}_types import {{ i }}
+{% endfor %}
+
+{% for import_ in imports %}
+from {{ import_.origin }} import {{ import_.target }}
+{% endfor %}
+
+{% if metadata %}
+from typing import List, Union
+from sila2.framework import Feature, Command, Property, FullyQualifiedIdentifier
+{% endif %}
+{% if observable_properties or observable_commands %}
+from queue import Queue
+{% endif %}
+{% if observable_commands %}
+from sila2.framework import CommandExecutionInfo
+{% endif %}
+{% for cmd in unobservable_commands %}
+from .{{ feature._identifier|lower }}_types import {{ cmd.name }}_Responses
+{% endfor %}
+{% for cmd in observable_commands %}
+from .{{ feature._identifier|lower }}_types import {{ cmd.name }}_Responses
+    {% if cmd.intermediate_responses %}
+from .{{ feature._identifier|lower }}_types import {{ cmd.name }}_IntermediateResponses
+    {% endif %}
+{% endfor %}
+
+class {{ feature._identifier }}Base(FeatureImplementationBase, ABC):
+{% if not observable_properties %}
+    """
+    {{ feature._description }}
+    """
+{% endif %}
+
+{% for prop in observable_properties %}
+    _{{ prop.name }}_producer_queue: Queue[{{ prop.type.representation }}]
+{% endfor %}
+
+{% if observable_properties %}
+    def __init__(self):
+        """
+        {{ feature._description }}
+        """
+    {% for prop in observable_properties %}
+        self._{{ prop.name }}_producer_queue = Queue()
+    {% endfor %}
+{% endif %}
+
+{% for prop in unobservable_properties %}
+    @abstractmethod
+    def get_{{ prop.name }}(self, *, metadata: Dict[FullyQualifiedIdentifier, Any]) -> {{ prop.type.representation }}:
+        """
+        {{ prop.docstring }}
+
+        :param metadata: The SiLA Client Metadata attached to the call
+        :return: {{ prop.docstring }}
+        """
+        pass
+{% endfor %}
+
+{% for prop in observable_properties %}
+    def update_{{ prop.name }}(self, {{ prop.name }}: {{ prop.type.representation }}):
+        """
+        {{ prop.docstring }}
+
+        This method updates the observable property '{{ prop.name }}'.
+        """
+        self._{{ prop.name }}_producer_queue.put({{ prop.name }})
+
+    def {{ prop.name }}_on_subscription(self, *, metadata: Dict[FullyQualifiedIdentifier, Any]) -> None:
+        """
+        {{ prop.docstring }}
+
+        This method is called when a client subscribes to the observable property '{{ prop.name }}'
+
+        :param metadata: The SiLA Client Metadata attached to the call
+        :return:
+        """
+        pass
+{% endfor %}
+
+{% for cmd in unobservable_commands %}
+    @abstractmethod
+    def {{ cmd.name }}(
+        self,
+        {% for param in cmd.parameters %}{{ param.name }}: {{ param.type.representation }},{% endfor %}
+        *,
+        metadata: Dict[FullyQualifiedIdentifier, Any]
+    ) -> {{ cmd.name }}_Responses:
+        """
+        {{ cmd.docstring }}
+
+    {% for param in cmd.parameters %}
+        :param {{ param.name }}: {{ param.docstring }}
+    {% endfor %}
+        :param metadata: The SiLA Client Metadata attached to the call
+    {% if cmd.responses %}
+        :return:
+        {% for response in cmd.responses %}
+            - {{ response.name }}: {{ response.docstring }}
+        {% endfor %}
+    {% endif %}
+        """
+        pass
+{% endfor %}
+
+{% for cmd in observable_commands %}
+    @abstractmethod
+    def {{ cmd.name }}(
+        self,
+        {% for param in cmd.parameters %}{{ param.name }}: {{ param.type.representation }},{% endfor %}
+        *,
+        metadata: Dict[FullyQualifiedIdentifier, Any],
+        execution_info_queue: Queue[CommandExecutionInfo],
+        {% if cmd.intermediate_responses %}intermediate_response_queue: Queue[{{ cmd.name }}_IntermediateResponses],{% endif %}
+    ) -> {{ cmd.name }}_Responses:
+        """
+        {{ cmd.docstring }}
+
+    {% for param in cmd.parameters %}
+        :param {{ param.name }}: {{ param.docstring }}
+    {% endfor %}
+        :param metadata: The SiLA Client Metadata attached to the call
+        :param execution_info_queue: A queue for command execution information
+        {% if cmd.intermediate_responses %}:param intermediate_response_queue: A queue for intermediate responses{% endif %}
+    {% if cmd.responses %}
+        :return:
+        {% for response in cmd.responses %}
+            - {{ response.name }}: {{ response.docstring }}
+        {% endfor %}
+    {% endif %}
+        """
+        pass
+{% endfor %}
+
+{% for meta in metadata %}
+    @abstractmethod
+    def get_calls_affected_by_{{ meta.name }}(self) -> List[Union[Feature, Command, Property, FullyQualifiedIdentifier]]:
+        """
+        Returns the fully qualified identifiers of all features, commands and properties affected by the
+        SiLA Client Metadata 'Delay'.
+
+        **Description of '{{ meta.name }}'**:
+        {{ meta.docstring }}
+
+        :return: Fully qualified identifiers of all features, commands and properties affected by the
+            SiLA Client Metadata 'Delay'.
+        """
+        pass
+{% endfor %}

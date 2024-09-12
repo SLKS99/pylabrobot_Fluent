@@ -1,0 +1,205 @@
+from __future__ import annotations
+
+from abc import ABC
+from sila2.server import FeatureImplementationBase
+{% if metadata or unobservable_properties or unobservable_commands or observable_commands %}
+from abc import abstractmethod
+{% endif %}
+{% if observable_commands %}
+from typing import Optional
+from datetime import timedelta
+{% endif %}
+{% if unobservable_properties or observable_properties or unobservable_commands or observable_commands %}
+from sila2.server import MetadataDict
+{% endif %}
+
+{% for i in definition_imports %}
+from .{{ feature._identifier|lower }}_types import {{ i }}
+{% endfor %}
+
+{% for import_ in imports %}
+from {{ import_.origin }} import {{ import_.target }}
+{% endfor %}
+{% if metadata %}
+from typing import List, Union
+from sila2.framework import Feature, Command, Property, FullyQualifiedIdentifier
+{% endif %}
+{% if observable_properties %}
+from typing import Optional, Union
+from queue import Queue
+{% endif %}
+{% for cmd in unobservable_commands %}
+from .{{ feature._identifier|lower }}_types import {{ cmd.name }}_Responses
+{% endfor %}
+{% for cmd in observable_commands %}
+from .{{ feature._identifier|lower }}_types import {{ cmd.name }}_Responses
+    {% if cmd.intermediate_responses %}
+from .{{ feature._identifier|lower }}_types import {{ cmd.name }}_IntermediateResponses
+from sila2.server import ObservableCommandInstanceWithIntermediateResponses
+    {% else %}
+from sila2.server import ObservableCommandInstance
+    {% endif %}
+{% endfor %}
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+{% if part_of_server_package %}
+    from ...server import Server
+{% else %}
+    from typing import TypeVar
+    from sila2.server import SilaServer
+    Server = TypeVar("Server", bound=SilaServer)
+{% endif %}
+
+class {{ feature._identifier }}Base(FeatureImplementationBase, ABC):
+    parent_server: Server
+
+{% for prop in observable_properties %}
+    _{{ prop.name }}_producer_queue: Queue[Union[{{ prop.type.representation }}, Exception]]
+    _{{ prop.name }}_current_value: {{ prop.type.representation }}
+{% endfor %}
+
+{% for cmd in observable_commands %}
+    {{ cmd.name }}_default_lifetime_of_execution: Optional[timedelta]
+{% endfor %}
+
+    def __init__(self, parent_server: Server):
+        """
+        {{ feature._description }}
+        """
+        super().__init__(parent_server=parent_server)
+
+    {% for prop in observable_properties %}
+        self._{{ prop.name }}_producer_queue = Queue()
+    {% endfor %}
+
+    {% for cmd in observable_commands %}
+        self.{{ cmd.name }}_default_lifetime_of_execution = None
+    {%- endfor -%}
+
+{% for prop in unobservable_properties %}
+    @abstractmethod
+    def get_{{ prop.name }}(self, *, metadata: MetadataDict) -> {{ prop.type.representation }}:
+        """
+        {{ prop.docstring }}
+
+        :param metadata: The SiLA Client Metadata attached to the call
+        :return: {{ prop.docstring }}
+        """
+{% endfor %}
+
+{% for prop in observable_properties %}
+    def update_{{ prop.name }}(self, {{ prop.name }}: {{ prop.type.representation }}, queue: Optional[Queue[{{ prop.type.representation }}]] = None) -> None:
+        """
+        {{ prop.docstring }}
+
+        This method updates the observable property '{{ prop.name }}'.
+
+        :param queue: The queue to send updates to. If None, the default Queue will be used.
+        """
+        if queue is None:
+            queue = self._{{ prop.name }}_producer_queue
+            self._{{ prop.name }}_current_value = {{ prop.name }}
+        queue.put({{ prop.name }})
+
+    def {{ prop.name }}_on_subscription(self, *, metadata: MetadataDict) -> Optional[Queue[{{ prop.type.representation }}]]:
+        """
+        {{ prop.docstring }}
+
+        This method is called when a client subscribes to the observable property '{{ prop.name }}'
+
+        :param metadata: The SiLA Client Metadata attached to the call
+        :return: Optional `Queue` that should be used for updating this property.
+            If None, the default Queue will be used.
+        """
+
+    def abort_{{ prop.name }}_subscriptions(self, error: Exception, queue: Optional[Queue[{{ prop.type.representation }}]] = None) -> None:
+        """
+        {{ prop.docstring }}
+
+        This method aborts subscriptions to the observable property '{{ prop.name }}'.
+
+        :param error: The Exception to be sent to the subscribing client.
+            If it is no DefinedExecutionError or UndefinedExecutionError, it will be wrapped in an UndefinedExecutionError.
+        :param queue: The queue to abort. If None, the default Queue will be used.
+        """
+        if queue is None:
+            queue = self._{{ prop.name }}_producer_queue
+        queue.put(error)
+
+    @property
+    def current_{{ prop.name }}(self) -> {{ prop.type.representation }}:
+        try:
+            return self._{{ prop.name }}_current_value
+        except AttributeError:
+            raise AttributeError("Observable property {{ prop.name }} has never been set")
+{% endfor %}
+
+{% for cmd in unobservable_commands %}
+    @abstractmethod
+    def {{ cmd.name }}(
+        self,
+        {% for param in cmd.parameters %}{{ param.name }}: {{ param.type.representation }},{% endfor %}
+        *,
+        metadata: MetadataDict
+    ) -> {{ cmd.name }}_Responses:
+        """
+        {{ cmd.docstring }}
+
+    {% for param in cmd.parameters %}
+        :param {{ param.name }}: {{ param.docstring }}
+    {% endfor %}
+        :param metadata: The SiLA Client Metadata attached to the call
+    {% if cmd.responses %}
+        :return:
+        {% for response in cmd.responses %}
+            - {{ response.name }}: {{ response.docstring }}
+        {% endfor %}
+    {% endif %}
+        """
+{% endfor %}
+
+{% for cmd in observable_commands %}
+    @abstractmethod
+    def {{ cmd.name }}(
+        self,
+        {% for param in cmd.parameters %}{{ param.name }}: {{ param.type.representation }},{% endfor %}
+        *,
+        metadata: MetadataDict,
+        {% if cmd.intermediate_responses %}
+        instance: ObservableCommandInstanceWithIntermediateResponses[{{ cmd.name }}_IntermediateResponses],
+        {% else %}
+        instance: ObservableCommandInstance
+        {% endif %}
+    ) -> {{ cmd.name }}_Responses:
+        """
+        {{ cmd.docstring }}
+
+    {% for param in cmd.parameters %}
+        :param {{ param.name }}: {{ param.docstring }}
+    {% endfor %}
+        :param metadata: The SiLA Client Metadata attached to the call
+        :param instance: The command instance, enabling sending status updates to subscribed clients
+    {% if cmd.responses %}
+        :return:
+        {% for response in cmd.responses %}
+            - {{ response.name }}: {{ response.docstring }}
+        {% endfor %}
+    {% endif %}
+        """
+{% endfor %}
+
+{% for meta in metadata %}
+    @abstractmethod
+    def get_calls_affected_by_{{ meta.name }}(self) -> List[Union[Feature, Command, Property, FullyQualifiedIdentifier]]:
+        """
+        Returns the fully qualified identifiers of all features, commands and properties affected by the
+        SiLA Client Metadata '{{ meta.name }}'.
+
+        **Description of '{{ meta.name }}'**:
+        {{ meta.docstring }}
+
+        :return: Fully qualified identifiers of all features, commands and properties affected by the
+            SiLA Client Metadata '{{ meta.name }}'.
+        """
+{% endfor %}

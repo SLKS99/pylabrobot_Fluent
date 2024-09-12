@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+
+from sila2.client import SilaClient
+
+{% for feature in features %}
+    {% if feature.defined_execution_errors %}
+from .{{ feature._identifier.lower() }} import {{ feature._identifier }}Feature
+        {% for error in feature.defined_execution_errors.keys() %}
+from .{{ feature._identifier.lower() }} import {{ error }}
+        {% endfor %}
+    {% endif %}
+{% endfor %}
+
+{% if features %}
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    {% for feature in features %}
+    from .{{ feature._identifier.lower() }} import {{ feature._identifier }}Client
+    {% endfor %}
+{% endif %}
+
+
+class Client(SilaClient):
+    {% for feature in features %}
+    {{ feature._identifier }}: {{ feature._identifier }}Client
+    {% endfor %}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        {% for feature in features %}
+            {% for error in feature.defined_execution_errors.keys() %}
+        self._register_defined_execution_error_class(
+            {{ feature._identifier }}Feature.defined_execution_errors["{{ error }}"], {{ error }}
+        )
+            {% endfor %}
+        {% endfor %}

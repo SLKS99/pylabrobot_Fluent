@@ -26,19 +26,31 @@
     "websockets"
   ],
   "python.linting.pylintEnabled": true,
-  "python.linting.pylintArgs": ["--disable={c0103}"],
+  "python.linting.pylintArgs": [
+    "--disable={c0103}"
+  ],
   "python.linting.mypyEnabled": true,
   "python.linting.enabled": true,
-  "python.testing.pytestArgs": ["."],
+  "python.testing.pytestArgs": [
+    "."
+  ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.testing.autoTestDiscoverOnSaveEnabled": true,
-  "editor.rulers": [100],
+  "editor.rulers": [
+    100
+  ],
   "editor.formatOnSave": true,
   "files.exclude": {
     "**/__pycache__": true
   },
-  "python.testing.unittestArgs": ["-v", "-s", ".", "-p", "*_test.py"],
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    ".",
+    "-p",
+    "*_test.py"
+  ],
   "[markdown]": {
     "editor.wordWrap": "bounded",
     "editor.wordWrapColumn": 100
@@ -47,5 +59,6 @@
     "editor.wordWrap": "bounded",
     "editor.wordWrapColumn": 100
   },
-  "mypy.runUsingActiveInterpreter": true
+  "mypy.runUsingActiveInterpreter": true,
+  "dotnet.preferCSharpExtension": true
 }

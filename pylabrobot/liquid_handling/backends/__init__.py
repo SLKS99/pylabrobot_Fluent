@@ -9,3 +9,4 @@ from .http import HTTPBackend
 from .opentrons_backend import OpentronsBackend
 from .saver_backend import SaverBackend
 from .tecan.EVO import EVO
+from .tecan.FLUENT import FLUENT

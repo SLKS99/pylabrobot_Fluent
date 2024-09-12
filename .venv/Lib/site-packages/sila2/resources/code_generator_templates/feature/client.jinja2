@@ -1,0 +1,109 @@
+# -----
+# This class does not do anything useful at runtime. Its only purpose is to provide type annotations.
+# Since sphinx does not support .pyi files (yet?), this is a .py file.
+# -----
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    {% for import_ in imports %}
+    from {{ import_.origin }} import {{ import_.target }}
+    {% endfor %}
+
+    {% for i in definition_imports %}
+    from .{{ feature._identifier|lower }}_types import {{ i }}
+    {% endfor %}
+
+    {% if unobservable_properties %}
+    from sila2.client import ClientUnobservableProperty
+    {% endif %}
+    {% if observable_properties %}
+    from sila2.client import ClientObservableProperty
+    {% endif %}
+    {% if unobservable_commands or observable_commands %}
+    from typing import Optional, Iterable
+    from sila2.client import ClientMetadataInstance
+    {% endif %}
+    {% for cmd in unobservable_commands %}
+    from {{ feature._identifier|lower }}_types import {{ cmd.name }}_Responses
+    {% endfor %}
+    {% for cmd in observable_commands %}
+    from {{ feature._identifier|lower }}_types import {{ cmd.name }}_Responses
+        {% if cmd.has_intermediate_responses %}
+    from {{ feature._identifier|lower }}_types import {{ cmd.name }}_IntermediateResponses
+        {% endif %}
+    {% endfor %}
+
+    {% for cmd in observable_commands %}
+    from sila2.client import ClientObservableCommandInstance{% if cmd.has_intermediate_responses %}WithIntermediateResponses{% endif %}
+    {% endfor %}
+
+    {% if metadata %}
+    from sila2.client import ClientMetadata
+    {% endif %}
+
+
+class {{ feature._identifier }}Client:
+    """
+    {{ feature._description }}
+    """
+    {% if not metadata and not unobservable_properties and not observable_properties and not unobservable_commands and not observable_commands %}
+    pass
+    {% endif %}
+    {% for prop in unobservable_properties %}
+    {{ prop.name }}: ClientUnobservableProperty[{{ prop.type.representation }}]
+    """
+    {{ prop.docstring }}
+    """
+    {% endfor %}
+
+    {% for prop in observable_properties %}
+    {{ prop.name }}: ClientObservableProperty[{{ prop.type.representation }}]
+    """
+    {{ prop.docstring }}
+    """
+    {% endfor %}
+
+    {% for meta in metadata %}
+    {{ meta.name }}: ClientMetadata[{{ meta.type.representation }}]
+    """
+    {{ meta.docstring }}
+    """
+    {% endfor %}
+
+    {% for cmd in unobservable_commands %}
+    def {{ cmd.name }}(
+        self,
+        {% for param in cmd.parameters %}
+        {{ param.name }}: {{ param.type.representation }},
+        {% endfor %}
+        *,
+        metadata: Optional[Iterable[ClientMetadataInstance]] = None
+    ) -> {{ cmd.name }}_Responses:
+        """
+        {{ cmd.docstring }}
+        """
+        ...
+    {% endfor %}
+
+    {% for cmd in observable_commands %}
+    def {{ cmd.name }}(
+        self,
+        {% for param in cmd.parameters %}
+        {{ param.name }}: {{ param.type.representation }},
+        {% endfor %}
+        *,
+        metadata: Optional[Iterable[ClientMetadataInstance]] = None
+    ) -> ClientObservableCommandInstance{% if cmd.has_intermediate_responses %}WithIntermediateResponses{% endif %}[
+        {% if cmd.has_intermediate_responses %}
+            {{ cmd.name }}_IntermediateResponses,
+        {% endif %}
+        {{ cmd.name }}_Responses
+    ]:
+        """
+        {{ cmd.docstring }}
+        """
+        ...
+    {% endfor %}

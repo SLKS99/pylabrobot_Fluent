@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+from typing import Set
+from sila2.client import SilaClient
+from sila2.framework import FullyQualifiedFeatureIdentifier
+
+{% for feature in features %}
+from . import {{ feature._identifier.lower() }}
+{% endfor %}
+
+
+class Client(SilaClient):
+    {% for feature in features %}
+    {{ feature._identifier }}: {{ feature._identifier.lower() }}.{{ feature._identifier }}Client
+    {% endfor %}
+    _expected_features: Set[FullyQualifiedFeatureIdentifier] = {
+        FullyQualifiedFeatureIdentifier("org.silastandard/core/SiLAService/v1"),
+    {% for feature in features %}
+        {{ feature.fully_qualified_identifier|repr }},
+    {% endfor %}
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        {% for feature in features %}
+            {% for error in feature.defined_execution_errors.keys() %}
+        self._register_defined_execution_error_class(
+            {{ feature._identifier.lower() }}.{{ feature._identifier }}Feature.defined_execution_errors["{{ error }}"],
+            {{ feature._identifier.lower() }}.{{ error }},
+        )
+            {% endfor %}
+        {% endfor %}

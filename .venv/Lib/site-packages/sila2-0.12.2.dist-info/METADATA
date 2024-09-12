@@ -1,0 +1,197 @@
+Metadata-Version: 2.1
+Name: sila2
+Version: 0.12.2
+Summary: Python implementation of the SiLA 2 standard for lab automation
+Author-email: Niklas Mertsch <niklas.mertsch@wega-it.com>
+License: MIT License
+        
+        Copyright (c) 2022 Niklas Mertsch
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://gitlab.com/sila2/sila_python
+Project-URL: Repository, https://gitlab.com/sila2/sila_python
+Project-URL: Documentation, https://sila2.gitlab.io/sila_python
+Project-URL: Bug Tracker, https://gitlab.com/sila2/sila_python/-/issues
+Project-URL: SiLA Standard, https://sila-standard.org
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Healthcare Industry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: grpcio >=1.44.0
+Requires-Dist: grpcio-tools >=1.44.0
+Requires-Dist: lxml >=4.4.0
+Requires-Dist: typing-extensions
+Requires-Dist: zeroconf
+Provides-Extra: codegen
+Requires-Dist: black ; extra == 'codegen'
+Requires-Dist: isort ; extra == 'codegen'
+Requires-Dist: jinja2 ; extra == 'codegen'
+Requires-Dist: typer ; extra == 'codegen'
+Provides-Extra: cryptography
+Requires-Dist: cryptography >=36.0.0 ; extra == 'cryptography'
+Provides-Extra: dev
+Requires-Dist: ruff ; extra == 'dev'
+Requires-Dist: pytest ; extra == 'dev'
+Requires-Dist: pytest-cov ; extra == 'dev'
+Provides-Extra: docs
+Requires-Dist: sphinx ; extra == 'docs'
+Requires-Dist: sphinxcontrib-napoleon ; extra == 'docs'
+Requires-Dist: sphinxcontrib-runcmd ; extra == 'docs'
+Provides-Extra: full
+Requires-Dist: black ; extra == 'full'
+Requires-Dist: cryptography >=36.0.0 ; extra == 'full'
+Requires-Dist: isort ; extra == 'full'
+Requires-Dist: jinja2 ; extra == 'full'
+Requires-Dist: jsonschema ; extra == 'full'
+Requires-Dist: pytest ; extra == 'full'
+Requires-Dist: pytest-cov ; extra == 'full'
+Requires-Dist: ruff ; extra == 'full'
+Requires-Dist: sphinx ; extra == 'full'
+Requires-Dist: sphinxcontrib-napoleon ; extra == 'full'
+Requires-Dist: sphinxcontrib-runcmd ; extra == 'full'
+Requires-Dist: typer ; extra == 'full'
+Requires-Dist: xmlschema ; extra == 'full'
+Provides-Extra: jsonschema
+Requires-Dist: jsonschema ; extra == 'jsonschema'
+Provides-Extra: test
+Requires-Dist: pytest ; extra == 'test'
+Requires-Dist: pytest-cov ; extra == 'test'
+Provides-Extra: xmlschema
+Requires-Dist: xmlschema ; extra == 'xmlschema'
+
+[![PyPI version](https://img.shields.io/pypi/v/sila2?color=blue)](https://pypi.org/project/sila2)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![coverage report](https://img.shields.io/gitlab/coverage/sila2/sila_python/master?job_name=coverage)](https://gitlab.com/sila2/sila_python/)
+[![documentation](https://img.shields.io/gitlab/pipeline-status/sila2/sila_python?branch=master&label=docs)](https://sila2.gitlab.io/sila_python)
+
+> :warning: On 2021-11-15, this project replaced a legacy Python implementation of SiLA 2. That project can be found [here](https://gitlab.com/SiLA2/legacy/sila_python_20211115) and is still installable via [`pip install sila2lib`](https://pypi.org/project/sila2lib/).
+
+# SiLA 2 Python Implementation
+
+|||
+| ---------------| ----------------------------------------------------------- |
+| SiLA Homepage  | [https://sila-standard.com](https://sila-standard.com)      |
+| Chat group     | [Join the group on Slack](https://sila-standard.org/slack)  |
+| Maintainer     | [Niklas Mertsch](mailto:niklas.mertsch@wega-it.com) ([@NMertsch](https://gitlab.com/NMertsch)) |
+| Maintainer     | [Mark Doerr](mailto:mark.doerr@uni-greifswald.de) ([@markdoerr](https://gitlab.com/markdoerr)) |
+
+## Getting started
+### Installation
+Use `pip install sila2` to install the latest release of the library.
+
+There are optional dependencies:
+- `pip install sila2[codegen]` is required for code generation but not for running SiLA Servers or Clients
+- `pip install sila2[cryptography]` is required for auto-generating self-signed SSL certificates on server startup, and for additional certificate validation steps by the client
+
+On Raspberry Pi systems, run the following to fix some `ImportErrors`:
+- `pip uninstall -y lxml grpcio grpcio-tools`
+- `sudo apt install -y python3-lxml python3-grpcio python3-grpc-tools`
+
+### Dependencies
+This project only has a few direct dependencies:
+- [grpc](https://github.com/grpc/grpc) for gRPC-based communication
+- [lxml](https://github.com/lxml/lxml) for XML interactions (parsing, XSD validation, XSL transformation)
+- [zeroconf](https://github.com/python-zeroconf/python-zeroconf) for SiLA2 Server Discovery
+- [typing-extensions](https://github.com/python/typing_extensions) for type hinting
+- [typer](https://github.com/tiangolo/typer) for server command line interfaces (server only, can be disabled during code generation)
+
+A list of all dependencies (including transitive dependencies) for the latest version of the example server
+can be found [here](https://gitlab.com/SiLA2/sila_python/-/jobs/artifacts/master/raw/sila2_example_server_sbom.txt?job=sbom)
+
+### Documentation
+A documentation on SiLA Server generation, feature implementation, and usage of SiLA Clients can be found [here](https://sila2.gitlab.io/sila_python/).
+
+### Example
+The directory [`example_server`](example_server/) contains an example SiLA Server application. [`example_client_scripts`](example_client_scripts/) contains multiple SiLA Client programs that interact with the example server.
+
+## Implementation status
+### Missing parts from SiLA 2 specification
+- Lifetime handling for binary transfer
+  - currently, large binaries are only deleted on request
+- Server-initiated connection (SiLA 2 v1.1)
+  - currently, only client-initiated connections are supported
+
+### Deviations from SiLA 2 specification
+- [Duration](https://gitlab.com/SiLA2/sila_base/-/blob/master/protobuf/SiLAFramework.proto#L67) is rounded to microseconds, because [`datetime.timedelta`](https://docs.python.org/3.9/library/datetime.html#datetime.timedelta) does not support sub-microsecond precision
+- Microseconds of [`datetime.time`](https://docs.python.org/3.9/library/datetime.html#datetime.time) and [`datetime.datetime`](https://docs.python.org/3.9/library/datetime.html#datetime.datetime) are ignored since [Time](https://gitlab.com/SiLA2/sila_base/-/blob/master/protobuf/SiLAFramework.proto#L38) and [Timestamp](https://gitlab.com/SiLA2/sila_base/-/blob/master/protobuf/SiLAFramework.proto#L45) don't support sub-second precision 
+
+## Contributing
+Contributions in the form of [issues](https://gitlab.com/SiLA2/sila_python/-/issues), [feature requests](https://gitlab.com/SiLA2/sila_python/-/issues) and merge requests are welcome. To reduce duplicate work, please create an issue and state that you are working on it before you spend significant time on writing code for a merge request.
+
+###  Development
+#### Multi-stage build process
+Because the `sila2.features` submodule is auto-generated using the code generator included in this library, the build process has multiple steps:
+1. Install the library without `sila2.feature`
+2. Use the script [`generate-feature-submodule.py`](./generate-feature-submodule.py) to generate `sila2.feature`
+3. Install again
+
+#### Development tools
+This project uses the following tools to improve code quality:
+- [ruff](https://docs.astral.sh/ruff/) for code formatting and linting
+- [pytest](https://docs.pytest.org/) for testing
+- [pytest-cov](https://github.com/pytest-dev/pytest-cov) for measuring code coverage
+
+The following Python scripts are provided to guide the development process:
+- [`run-formatting.py`](run-formatting.py) applies `ruff format` and `ruff check --select I --fix .`
+- [`run-checks.py`](run-checks.py) checks for formatting and code style problems, and runs the tests
+- [`install-pre-commit-hook.py`](install-pre-commit-hook.py) installs a `pre-commit` [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) to automatically execute a fast-running subset of all checks on each commit
+
+To install all these tools, use `pip install .[dev]`.
+
+#### Documentation build process
+To build the documentation, first install this library with `pip install .[docs]`, the run [`docs/make-docs.py`](docs/make-docs.py).
+The HTML documentation can then be found at `docs/_build/html`
+
+#### Setup code
+The full development setup using the [setuptools development mode](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) looks like this:
+```shell
+# clone repository
+git clone --recurse-submodules https://gitlab.com/sila2/sila_python
+cd sila2
+
+# install sila2 in development mode
+pip install -e .[full]  # install without sila2.feature submodule and all optional dependencies
+python generate-feature-submodule.py  # generate sila2.feature code (generates src/sila2/feature/...)
+
+# build documentation (generates docs/_build/html)
+python docs/make-docs.py
+
+# install example server in development mode (required for tests)
+pip install -e example_server
+
+# run test suite
+python run-checks.py
+
+# run code formatting
+python run-formatting.py
+
+# install git pre-commit hook (generates .git/hooks/pre-commit)
+python install-pre-commit-hook.py
+
+# build wheel and source distribution (generates build/ and dist/)
+pip install build
+python -m build -ws
+```

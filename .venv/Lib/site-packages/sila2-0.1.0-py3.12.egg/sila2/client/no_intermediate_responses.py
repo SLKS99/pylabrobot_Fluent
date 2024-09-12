@@ -1,0 +1,2 @@
+class NoIntermediateResponses(Exception):
+    pass

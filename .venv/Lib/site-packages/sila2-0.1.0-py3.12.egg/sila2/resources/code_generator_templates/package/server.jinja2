@@ -1,0 +1,22 @@
+{% for feature in features %}
+from {{ package_name }}.generated.{{ feature._identifier.lower() }} import {{ feature._identifier }}Feature
+{% endfor %}
+
+from sila2.server import SilaServer
+
+
+class Server(SilaServer):
+    def __init__(self):
+        # TODO: fill in your server information
+        super().__init__(
+            server_name="TODO",
+            server_type="TODO",
+            server_version="TODO",
+            server_description="TODO",
+            server_vendor_url="TODO",
+        )
+
+        # TODO: add your feature implementations to the server
+        {% for feature in features %}
+        self.set_feature_implementation({{ feature._identifier }}Feature, ...)
+        {% endfor %}
