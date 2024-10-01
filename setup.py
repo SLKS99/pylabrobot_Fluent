@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # You might want to create a __version__.py file in your package
-from pylabrobot_fluent.__version__ import __version__
+from pylabrobot_Fluent.__version__ import __version__
 
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
@@ -26,7 +26,7 @@ extras_dev = extras_sila2 + [
 ]
 
 setup(
-    name="pylabrobot_fluent",
+    name="pylabrobot_Fluent",
     version=__version__,
     packages=find_packages(exclude=["tests", "docs"]),
     description="A PyLabRobot backend for Tecan Fluent using SiLA2",
@@ -34,7 +34,7 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=install_requires,
     url="https://github.com/SLKS99/pylabrobot_Fluent",
-    package_data={"pylabrobot_fluent": ["sila2_connector/*"]},  # Include SiLA2 connector files if needed
+    package_data={"pylabrobot_Fluent": ["sila2_connector/*"]},  # Include SiLA2 connector files if needed
     extras_require={
         "sila2": extras_sila2,
         "dev": extras_dev,

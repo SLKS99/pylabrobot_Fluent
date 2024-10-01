@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union
 from pylabrobot.liquid_handling.backends.backend import LiquidHandlerBackend
-from tecan import Fluent, DiTi  # Import your SiLA Fluent Client commands (customized from your provided code)
+from tecan import Fluent, DiTi
 from pylabrobot.liquid_handling.standard import Pickup, Drop, Aspiration, Dispense
 
 
